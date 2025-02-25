@@ -177,6 +177,7 @@ article {
   width: var(--image-setting-width);
   height: 100vh;
   padding: 10px;
+  /* border-right: 1px solid #cccccc; */
 
   display: flex;
   flex-direction: column;
@@ -188,7 +189,7 @@ article {
   z-index: 10;
 
   /* background-color: #aaffaa; */
-  background-color: #ffffff;
+  background-color: #ddffff;
 }
 .image-settings > * {
   width: 100%;
