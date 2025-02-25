@@ -26,5 +26,5 @@ jobs:
           server: "49.212.198.106"
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           local_path: "./dist/*"
-          remote_path: "/home/puyosim/www/img-convert"
+          remote_path: "/home/puyosim/www/shrle/img-convert"
           sftpArgs: "-o ConnectTimeout=5"
