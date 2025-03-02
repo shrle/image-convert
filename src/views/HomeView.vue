@@ -1,35 +1,41 @@
 <template>
   <header>
-    <h1>画像一括変換</h1>
+    <h1><img src="@/assets/logo.svg" alt="ロゴ" />画像一括変換</h1>
   </header>
-  <article>
+  <article @dragover.prevent="dragover()">
     <!-- @@@@@ ファイル読み込み @@@@@  -->
     <section class="image-info">
-      <div class="input-file-container">
+      <section class="input-container">
         <input
           type="file"
           id="input-images"
           accept="image/*"
-          @dragover.prevent="onDrag('over')"
-          @dragleave="onDrag('leave')"
           @change="changeFile"
+          :class="{ hidden: !isDragOver }"
+          @dragover.prevent="dragover()"
+          @dragleave="dragleave()"
           multiple
         />
-
-        <label for="input-images" :class="{ over: isDragOver }">
-          画像ファイルをここに<br />ドラッグ＆ドロップしてください</label
+        <label
+          for="input-images"
+          class="pc"
+          :class="{ over: isDragOver }"
+          @dragover.prevent="dragover()"
         >
-      </div>
-      <section class="thum-container">
-        <p :class="{ 'display-none': images }">サムネイル一覧</p>
+          <p class="">画像ファイルをこの画面に<br />ドロップしてください</p>
+        </label>
+        <label for="input-images" class="mobile"> + 画像の追加</label>
+      </section>
+
+      <section class="thum-container" @dragover.prevent="dragover()">
         <template v-for="img in images" :key="img">
-          <img :src="img.src" alt="" />
+          <img :src="img.src" alt="サムネイル" />
         </template>
       </section>
     </section>
 
     <!-- @@@@@ 画像設定 @@@@@ -->
-    <section class="image-settings">
+    <section class="image-settings" @dragover.prevent="dragover()">
       <p>
         <label for="resizeTarget">リサイズの仕方</label>
         <select id="resizeTarget" v-model="resizeTarget">
@@ -108,7 +114,6 @@
           <option value="image/png">png</option>
           <option value="image/jpeg">jpg</option>
           <option value="image/webp">webp</option>
-          <option value="image/gif">gif</option>
         </select>
       </p>
       <p class="save-button-container">
@@ -116,6 +121,9 @@
       </p>
     </section>
   </article>
+  <div class="dragover" :class="{ visible: isDragOver }">
+    画像をドロップしてください
+  </div>
   <div class="image-loading" :class="{ show: imageLoading }">画像の読込中</div>
   <div class="image-saving" :class="{ show: imageSaving }">画像の保存中</div>
 
@@ -130,9 +138,18 @@
 <style>
 @import "normalize.css";
 
+/* TODO: ドラッグを禁止する */
+
 :root {
   --header-hight: 40px;
   --image-setting-width: 400px;
+
+  --body-background-color: #eee4e1;
+  --header-background-color: #ffffff;
+  --side-background-color: #adc77a;
+  --file-input-background-color: #a08c7b;
+  --file-input-color: #000000;
+  --thum-background-color: #eee4e1;
 }
 
 * {
@@ -141,8 +158,17 @@
   padding: 0;
 }
 
-h1 {
-  font-size: 1rem;
+body {
+  background-color: var(--body-background-color);
+  user-select: none;
+  -webkit-user-drag: none;
+  -moz-user-select: none;
+}
+
+img {
+  user-select: none;
+  -webkit-user-drag: none;
+  -moz-user-select: none;
 }
 
 header {
@@ -151,27 +177,41 @@ header {
   position: fixed;
   top: 0;
   left: 0;
-  background-color: #fff;
+  background-color: var(--header-background-color);
   z-index: 10;
+
+  display: flex;
+  align-items: center;
+}
+
+h1 {
+  height: 80%;
+  font-size: 1rem;
+  margin: 0;
+  margin-left: 30px;
+  display: flex;
+  align-items: center;
+}
+
+h1 img {
+  width: auto;
+  height: 100%;
+  margin-right: 10px;
 }
 
 article {
-  max-width: 1280px;
+  width: 100%;
+  min-height: calc(100vh - var(--header-hight));
+  height: 100%;
   padding-top: var(--header-hight);
   padding-left: var(--image-setting-width);
   position: relative;
 
   display: flex;
-  flex-direction: column;
+  justify-content: center;
 }
 
-.image-info {
-  width: 100%;
-  height: 100vh;
-
-  /* background-color: #ffaaaa; */
-  background-color: #ffffff;
-}
+/* @@@@@ サイドバーの設定 @@@@@ */
 
 .image-settings {
   width: var(--image-setting-width);
@@ -189,7 +229,7 @@ article {
   z-index: 10;
 
   /* background-color: #aaffaa; */
-  background-color: #ddffff;
+  background-color: var(--side-background-color);
 }
 .image-settings > * {
   width: 100%;
@@ -209,49 +249,123 @@ article {
   justify-content: center;
 }
 
-.input-file-container {
+/* @@@@@ 画像DDとサムネの設定 @@@@@ */
+
+.image-info {
+  max-width: 800px;
   width: 100%;
-  height: 40%;
+  height: 100%;
+
+  background-color: var(--thum-background-color);
+
   position: relative;
 }
 
-.input-file-container > input[type="file"] {
+/* .input-file-container {
   width: 100%;
-  height: 100%;
+  height: 40%;
+  position: relative;
+} */
+
+.input-container {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.input-container > input[type="file"] {
+  width: 100vw;
+  height: 100vh;
   opacity: 0;
   cursor: pointer;
 
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  z-index: 11;
+  z-index: 100;
 }
 
-.input-file-container > label {
-  width: 100%;
-  height: 100%;
+.input-container > label {
+  width: 400px;
+  height: 100px;
   margin: 0;
   padding: 50px;
+
   display: flex;
   justify-content: center;
   align-content: center;
   align-items: center;
-  font-size: 2rem;
+
+  font-size: 1.5rem;
   font-weight: bolder;
-  background-color: #cccccc;
+  border-radius: 15px;
+  background-color: var(--file-input-background-color);
+  color: var(--file-input-color);
+
+  position: fixed;
+  left: 50%;
+  bottom: 50px;
+  transform: translateX(-50% + var(--image-setting-width));
 }
 
-.input-file-container > label.over {
+.input-container > label.mobile {
+  display: none;
+
+  font-size: 1rem;
+  font-weight: bolder;
+  height: 40px;
+  min-width: 100px;
+  width: fit-content;
+
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-radius: 20px;
+  border: transparent 2px solid;
+}
+
+.input-container > label.mobile:hover {
+  background-color: #cccccc;
+}
+.input-container > label.mobile:active {
   background-color: #aaaaaa;
+}
+.input-container > label.mobile:focus {
+  background-color: #ffffff;
+  border: #000000 2px solid;
+  color: #000000;
+}
+
+.dragover {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff80;
+  font-size: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+
+  visibility: hidden;
 }
 
 .thum-container {
   width: 100%;
-  height: 40%;
+  height: 100%;
   padding: 10px;
+  background-color: var(--thum-background-color);
 
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-content: start;
   gap: 10px;
 
   overflow-y: scroll;
@@ -265,7 +379,7 @@ article {
 }
 
 .thum-container img {
-  height: 30%;
+  width: 100%;
   aspect-ratio: 1/1;
 
   border-radius: 15%;
@@ -273,8 +387,8 @@ article {
 }
 
 .image-loading {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
 
   display: flex;
@@ -296,8 +410,8 @@ article {
 }
 
 .image-saving {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
 
   display: flex;
@@ -323,6 +437,12 @@ input:read-only {
   background-color: transparent;
 }
 
+canvas {
+  position: fixed;
+  z-index: 1;
+  display: none;
+}
+
 .flex-row {
   display: flex;
   flex-direction: row;
@@ -335,14 +455,43 @@ input:read-only {
 .hidden {
   visibility: hidden;
 }
+.visible {
+  visibility: visible;
+}
 
 @media screen and (max-width: 700px) {
   article {
     padding-left: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .image-info {
+    max-height: 30%;
+    height: 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .input-container label {
+    width: 90%;
+    position: static;
   }
   .image-settings {
     width: 100%;
     position: static;
+  }
+
+  .input-container > label.pc {
+    display: none;
+  }
+
+  .input-container > label.mobile {
+    display: flex;
+  }
+
+  .thum-container {
+    max-height: calc(100% - 60px);
   }
 }
 </style>
@@ -399,35 +548,24 @@ export default {
     },
   },
   watch: {
-    resizeWidth(value, oldWidth) {
-      if (isNaN(value)) {
-        console.dir(oldWidth);
-        // this.resizeWidth = oldWidth;
-        return;
-      }
-      console.dir(oldWidth);
+    resizeWidth(value) {
       this.resizeWidth = value < 0 ? 0 : value;
     },
-    resizeHeight(value, oldHeight) {
-      if (isNaN(value)) {
-        this.resizeHeight = oldHeight;
-        return;
-      }
+    resizeHeight(value) {
       this.resizeHeight = value < 0 ? 0 : value;
     },
-    parent(value, oldParcent) {
-      if (isNaN(value)) {
-        this.parcent = oldParcent;
-        return;
-      }
+    parent(value) {
       this.parcent = value < 0.1 ? 0.1 : value;
       this.parcent = value > 100 ? 100 : value;
     },
   },
   mounted() {},
   methods: {
-    onDrag(state) {
-      this.isDragOver = state === "over";
+    dragover() {
+      this.isDragOver = true;
+    },
+    dragleave() {
+      this.isDragOver = false;
     },
     changeFile(event) {
       console.log("changeFile");
@@ -442,14 +580,7 @@ export default {
       this.imageLoading = true;
 
       setTimeout(async () => {
-        console.log("setTimeout");
-
-        try {
-          await this.loadImages(files);
-        } catch (error) {
-          console.dir(error);
-          console.log("画像の読み込みに失敗");
-        }
+        await this.loadImages(files);
       }, 0);
 
       this.isDragOver = false;
@@ -460,8 +591,6 @@ export default {
      * @param {FileList} files
      */
     async loadImages(files) {
-      console.log("loadImages");
-      console.dir(files);
       if (!files) {
         this.imageLoading = false;
         return;
@@ -481,19 +610,18 @@ export default {
         this.basenameList.push(basename);
       }
 
-      console.dir(promiseList);
-
       // すべての画像の読み込みを行う
-      this.images = await Promise.all(promiseList);
-      console.log("this.images");
-      console.dir(this.images[0].src);
+      const result = await Promise.allSettled(promiseList);
 
-      // URL.createObjectURL(file) で生成したURLを開放する
-      // urlList.map((url) => {
-      //   URL.revokeObjectURL(url);
-      // });
+      if (!Array.isArray(this.images)) {
+        this.images = [];
+      }
 
-      console.log("complete!");
+      for (const r of result) {
+        if (r.status === "rejected") continue;
+        this.images.push(r.value);
+      }
+
       this.imageLoading = false;
     },
 
