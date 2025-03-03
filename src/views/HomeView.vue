@@ -127,6 +127,38 @@
   <div class="image-loading" :class="{ show: imageLoading }">画像の読込中</div>
   <div class="image-saving" :class="{ show: imageSaving }">画像の保存中</div>
 
+  <section class="about" :class="{ hidden: isAboutRead }">
+    <h2>機能</h2>
+    <ul>
+      <li>画像を一括でリサイズできます。</li>
+      <li>画像のファイル形式を一括で変換できます。(jpg/ png/ webp)</li>
+      <li>
+        すべての処理はお使いの端末上で行われます。画像のアップロードは行いません。
+      </li>
+    </ul>
+    <h2>使い方</h2>
+    <ol>
+      <li>
+        <span class="pc"
+          >まずこの画面に画像ファイルをドラッグ＆ドロップしてください。</span
+        >
+        <span class="mobile"
+          >まず「画像の追加」ボタンから画像を選択してください。</span
+        >
+      </li>
+
+      <li>
+        <span class="pc">左の項目を設定する</span>
+        <span class="mobile">下の項目を設定する</span>
+      </li>
+
+      <li>「変換して保存」ボタンを押す</li>
+    </ol>
+    <button class="text-button ok" @click="isAboutRead = true">
+      分かった！
+    </button>
+  </section>
+
   <canvas
     :width="canvasWidth"
     :height="canvasHeight"
@@ -197,6 +229,44 @@ h1 img {
   width: auto;
   height: 100%;
   margin-right: 10px;
+}
+
+.about {
+  max-width: 1000px;
+  width: 90%;
+  height: 60%;
+  padding: 50px;
+
+  background-color: #fff;
+  border-radius: 15px;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 101;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  row-gap: 20px;
+}
+
+.about h2 {
+}
+
+.about ul,
+.about ol {
+  padding-left: 30px;
+}
+
+.about li {
+  margin-bottom: 10px;
+}
+
+.about .mobile {
+  display: none;
 }
 
 article {
@@ -284,7 +354,7 @@ article {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 100;
+  z-index: 1001;
 }
 
 .input-container > label {
@@ -460,6 +530,14 @@ canvas {
 }
 
 @media screen and (max-width: 700px) {
+  .about .pc {
+    display: none;
+  }
+
+  .about .mobile {
+    display: inline;
+  }
+
   article {
     padding-left: 0;
     display: flex;
@@ -505,6 +583,7 @@ export default {
   components: {},
   data() {
     return {
+      isAboutRead: false,
       images: null,
       basenameList: [],
       resizeTarget: "width",
