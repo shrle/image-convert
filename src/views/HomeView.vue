@@ -152,7 +152,7 @@
     画像をドロップしてください
   </div>
   <div class="image-loading" :class="{ show: imageLoading }">画像の読込中</div>
-  <div class="image-saving" :class="{ show: imageSaving }">画像の保存中</div>
+  <div class="image-saving" :class="{ show: saving }">画像の保存中</div>
 
   <section class="about" :class="{ hide: isAboutRead }">
     <h2>機能</h2>
@@ -543,6 +543,7 @@ article {
   position: fixed;
   top: 0;
   left: 0;
+  z-index: 102;
 
   visibility: hidden;
 }
@@ -559,13 +560,14 @@ article {
   justify-content: center;
   align-items: center;
 
-  color: #555555;
-  font-size: 2rem;
+  color: #ffffff;
+  font-size: 3rem;
   font-weight: bolder;
 
   position: fixed;
   top: 0;
   left: 0;
+  z-index: 102;
 
   visibility: hidden;
 }
@@ -673,6 +675,7 @@ export default {
       imageQuality: 0.8,
       isDragOver: false,
       imageLoading: false,
+      saving: false,
 
       canvasWidth: 1920,
       canvasHeight: 1080,
