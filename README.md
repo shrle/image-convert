@@ -1,24 +1,49 @@
 # img-convert
 
-## Project setup
-```
-yarn install
-```
+[ブラウザ上で画像を一括でリサイズとファイル形式の変更を行えます。]
+[text](https://shrle.net/img-convert/)
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
+## 目次
 
-### Compiles and minifies for production
-```
-yarn build
-```
+- [概要](#概要)
+- [実行方法](#実行方法)
+- [使用方法](#使用方法)
+- [技術情報](#技術情報)
 
-### Lints and fixes files
-```
-yarn lint
-```
+## 概要
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+[ブラウザ上で画像を一括でリサイズでき、かつファイル形式を webp に変換できるアプリが見当たらなかったため、自作しました。]
+
+## インストール
+
+- [お使いのブラウザ上ですべて完結するのでインストールは必要ありません。]
+
+### 必要な環境
+
+- [最新版ブラウザでご利用ください]
+
+## 使用方法
+
+### 基本的な使い方
+
+1.  `[まずこの画面に画像ファイルをドラッグ＆ドロップしてください]`
+2.  `[左の項目を設定する]`
+3.  `[「変換して保存」ボタンを押す]`
+
+## 技術情報
+
+### 使用技術
+
+- [html, css, javascript, vue]
+
+### アーキテクチャ
+
+[Web アプリのアーキテクチャやシステム構成などを説明]
+
+### 開発環境
+
+- [Windows11, vscode, chroume]
+
+### 連絡先
+
+[shrle2424@gmail.com]

@@ -36,11 +36,11 @@ html {
   align-items: center;
 }
 
-.icon-.primary {
+.icon-button.primary {
   background-color: #aaaaaa;
 }
 
-.icon-.silent {
+.icon-button.silent {
   background-color: transparent;
 }
 

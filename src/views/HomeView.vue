@@ -1,6 +1,14 @@
 <template>
   <header>
-    <h1><img src="@/assets/logo.svg" alt="ロゴ" />画像一括変換</h1>
+    <div class="left-container">
+      <h1><img src="@/assets/logo.svg" alt="ロゴ" />画像一括変換</h1>
+    </div>
+
+    <div class="right-container">
+      <button class="icon-button silent" @click="isAboutRead = false">
+        <span class="material-symbols-outlined"> help </span>
+      </button>
+    </div>
   </header>
   <article @dragover.prevent="dragover()">
     <!-- @@@@@ ファイル読み込み @@@@@  -->
@@ -37,7 +45,10 @@
     <!-- @@@@@ 画像設定 @@@@@ -->
     <section class="image-settings" @dragover.prevent="dragover()">
       <p>
-        <label for="resizeTarget">リサイズの仕方</label>
+        <label for="resizeTarget"
+          ><span class="material-symbols-outlined"> resize </span
+          >リサイズの仕方</label
+        >
         <select id="resizeTarget" v-model="resizeTarget">
           <option value="width">横幅を指定し縦横比は維持</option>
           <option value="height">高さを指定し縦横比は維持</option>
@@ -48,7 +59,10 @@
       </p>
 
       <p>
-        <label for="resize-width">横幅</label>
+        <label for="resize-width">
+          <span class="material-symbols-outlined"> fit_page_width </span>
+          横幅</label
+        >
         <span class="flex-row" v-if="isWidthShow">
           <input
             type="number"
@@ -59,12 +73,16 @@
         </span>
 
         <span v-if="isWidthHidden && isParcentHidden"
+          ><span class="material-symbols-outlined"> join </span
           >高さに合わせ縦横比を維持</span
         >
       </p>
 
       <p>
-        <label for="resize-height">高さ</label>
+        <label for="resize-height"
+          ><span class="material-symbols-outlined"> fit_page_height </span
+          >高さ</label
+        >
         <span class="flex-row" v-if="isHeightShow">
           <input
             type="number"
@@ -75,12 +93,15 @@
         </span>
 
         <span v-if="isHeightHidden && isParcentHidden"
+          ><span class="material-symbols-outlined"> join </span
           >横幅に合わせ縦横比を維持</span
         >
       </p>
 
       <p>
-        <label for="parcent">割合</label>
+        <label for="parcent"
+          ><span class="material-symbols-outlined"> zoom_out </span>割合</label
+        >
         <span class="flex-row" v-if="isParcentShow">
           <input
             type="range"
@@ -96,7 +117,10 @@
       </p>
 
       <p>
-        <label for="image-quality">画質</label>
+        <label for="image-quality"
+          ><span class="material-symbols-outlined"> high_quality </span
+          >画質</label
+        >
         <input
           type="range"
           id="image-quality"
@@ -108,7 +132,10 @@
         <span>{{ imageQuality }}</span>
       </p>
       <p>
-        <label for="fileType">ファイル形式</label>
+        <label for="fileType"
+          ><span class="material-symbols-outlined"> image </span
+          >ファイル形式</label
+        >
         <select id="fileType" v-model="fileType">
           <option value="origin">変換なし</option>
           <option value="image/png">png</option>
@@ -127,7 +154,7 @@
   <div class="image-loading" :class="{ show: imageLoading }">画像の読込中</div>
   <div class="image-saving" :class="{ show: imageSaving }">画像の保存中</div>
 
-  <section class="about" :class="{ hidden: isAboutRead }">
+  <section class="about" :class="{ hide: isAboutRead }">
     <h2>機能</h2>
     <ul>
       <li>画像を一括でリサイズできます。</li>
@@ -212,8 +239,24 @@ header {
   background-color: var(--header-background-color);
   z-index: 10;
 
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: 1fr;
+}
+
+header > * {
+  width: 100%;
+  height: var(--header-hight);
   display: flex;
   align-items: center;
+}
+
+.right-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+
+  padding-right: 100px;
 }
 
 h1 {
@@ -232,25 +275,47 @@ h1 img {
 }
 
 .about {
-  max-width: 1000px;
   width: 90%;
   height: 60%;
+  max-width: 1000px;
   padding: 50px;
 
   background-color: #fff;
   border-radius: 15px;
 
   position: fixed;
+  z-index: 101;
   top: 50%;
   left: 50%;
-  z-index: 101;
+  right: auto;
   transform: translate(-50%, -50%);
+
+  /* top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); */
+  transition: all ease-in-out 0.3s;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   row-gap: 20px;
+}
+
+.about.hide {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+
+  z-index: -1;
+  top: 0;
+  right: 100px;
+  left: auto;
+  transform: translate(0, 0);
+}
+
+.about.hide * {
+  display: none;
 }
 
 .about h2 {
@@ -311,7 +376,18 @@ article {
 }
 
 .image-settings label {
-  width: 30%;
+  width: 40%;
+  display: flex;
+  align-items: center;
+}
+
+.image-settings label + * {
+  display: flex;
+  align-items: center;
+}
+
+.image-settings label span {
+  margin-right: 10px;
 }
 
 .save-button-container {
@@ -339,7 +415,7 @@ article {
 
 .input-container {
   width: 100%;
-  height: 100px;
+  height: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -443,11 +519,6 @@ article {
   scrollbar-width: thin;
 }
 
-.thum-container:hover {
-  scrollbar-color: #aaaaaa #ffffff;
-  scrollbar-width: thin;
-}
-
 .thum-container img {
   width: 100%;
   aspect-ratio: 1/1;
@@ -529,7 +600,7 @@ canvas {
   visibility: visible;
 }
 
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 800px) {
   .about .pc {
     display: none;
   }
@@ -551,6 +622,10 @@ canvas {
     align-items: center;
   }
 
+  .input-container {
+    height: 100px;
+  }
+
   .input-container label {
     width: 90%;
     position: static;
@@ -570,6 +645,10 @@ canvas {
 
   .thum-container {
     max-height: calc(100% - 60px);
+
+    overflow-y: auto;
+    scrollbar-color: #aaaaaa #ffffff;
+    scrollbar-width: thin;
   }
 }
 </style>
