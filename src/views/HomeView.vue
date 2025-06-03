@@ -655,8 +655,8 @@ canvas {
 }
 </style>
 
-<script>
-import loadImageSync from "@/js/load-image-sync";
+<script lang="ts">
+import loadImageSync from "@/ts/load-image-sync";
 // @ is an alias to /src
 
 export default {
