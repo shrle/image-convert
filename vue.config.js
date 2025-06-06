@@ -4,7 +4,7 @@ module.exports = defineConfig({
   publicPath: process.env.NODE_ENV === "production" ? "/img-convert/" : "/",
   pages: {
     index: {
-      entry: "src/main.js",
+      entry: "src/main.ts",
       title: "画像一括変換",
     },
   },

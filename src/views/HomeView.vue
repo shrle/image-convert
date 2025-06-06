@@ -52,7 +52,7 @@
         <select id="resizeTarget" v-model="resizeTarget">
           <option value="width">横幅を指定し縦横比は維持</option>
           <option value="height">高さを指定し縦横比は維持</option>
-          <option value="parcent">サイズの割合を指定</option>
+          <option value="percent">サイズの割合を指定</option>
           <option value="size">サイズを指定</option>
           <option value="origin">サイズを変更しない</option>
         </select>
@@ -99,19 +99,19 @@
       </p>
 
       <p>
-        <label for="parcent"
+        <label for="percent"
           ><span class="material-symbols-outlined"> zoom_out </span>割合</label
         >
         <span class="flex-row" v-if="isParcentShow">
           <input
             type="range"
-            id="parcent"
+            id="percent"
             min="0"
             max="100"
             step="0.1"
-            v-model="parcent"
+            v-model="percent"
           />
-          <span>{{ parcent }}</span
+          <span>{{ percent }}</span
           >%
         </span>
       </p>
@@ -657,21 +657,62 @@ canvas {
 
 <script lang="ts">
 import loadImageSync from "@/ts/load-image-sync";
+import { defineComponent } from "vue";
+
 // @ is an alias to /src
 
-export default {
+interface ComponentData {
+  /** 説明を読んだか？ true = 説明を非表示 , false = 説明を表示 */
+  isAboutRead: boolean;
+  /** ユーザーが指定した画像のリスト */
+  images: Array<HTMLImageElement>;
+  /** 拡張子を含まないファイル名のリスト */
+  basenameList: Array<string>;
+  /**
+   * 指定された値によってリサイズ後のサイズを決める
+   * "width": 横幅を指定し縦横比は維持
+   * "height": 高さを指定し縦横比は維持
+   * "percent": サイズの割合を指定
+   * "size": 横幅と高さを指定する
+   * "origin": サイズを変更しない
+   */
+  resizeTarget: "width" | "height" | "percent" | "size" | "origin";
+  /** 変更可能なファイル形式、ブラウザに依存する、現状chromeではこの3種類に対応する */
+  fileType: "image/png" | "image/jpeg" | "image/webp";
+  /** リサイズ後の横幅 */
+  resizeWidth: number;
+  /** リサイズ後の高さ */
+  resizeHeight: number;
+  /** オリジナルのサイズに対する割合 */
+  percent: number;
+  /** 画質の指定 0.0 - 1.0 */
+  imageQuality: number;
+  /** true = ドラッグオーバー中 */
+  isDragOver: boolean;
+  /** true = 画像読込中 */
+  imageLoading: boolean;
+  /** true = 画像保存中 */
+  saving: boolean;
+
+  /** キャンバスの横幅 */
+  canvasWidth: number;
+  /** キャンバスの高さ */
+  canvasHeight: number;
+}
+
+export default defineComponent({
   name: "HomeView",
   components: {},
-  data() {
+  data(): ComponentData {
     return {
       isAboutRead: false,
-      images: null,
+      images: [],
       basenameList: [],
       resizeTarget: "width",
       fileType: "image/png",
       resizeWidth: 1920,
       resizeHeight: 1080,
-      parcent: 100,
+      percent: 100,
       imageQuality: 0.8,
       isDragOver: false,
       imageLoading: false,
@@ -683,29 +724,29 @@ export default {
   },
   computed: {
     isWidthHidden() {
-      const st = this.resizeTarget;
+      const st: string = this.resizeTarget;
       return !(st === "width" || st === "size");
     },
     isWidthShow() {
-      const st = this.resizeTarget;
+      const st: string = this.resizeTarget;
       return st === "width" || st === "size";
     },
     isHeightHidden() {
-      const st = this.resizeTarget;
+      const st: string = this.resizeTarget;
       return !(st === "height" || st === "size");
     },
     isHeightShow() {
-      const st = this.resizeTarget;
+      const st: string = this.resizeTarget;
       return st === "height" || st === "size";
     },
     isParcentHidden() {
-      const st = this.resizeTarget;
-      return st !== "parcent";
+      const st: string = this.resizeTarget;
+      return st !== "percent";
     },
 
     isParcentShow() {
-      const st = this.resizeTarget;
-      return st === "parcent";
+      const st: string = this.resizeTarget;
+      return st === "percent";
     },
   },
   watch: {
@@ -716,25 +757,23 @@ export default {
       this.resizeHeight = value < 0 ? 0 : value;
     },
     parent(value) {
-      this.parcent = value < 0.1 ? 0.1 : value;
-      this.parcent = value > 100 ? 100 : value;
+      this.percent = value < 0.1 ? 0.1 : value;
+      this.percent = value > 100 ? 100 : value;
     },
   },
   mounted() {},
   methods: {
-    dragover() {
+    dragover(): void {
       this.isDragOver = true;
     },
-    dragleave() {
+    dragleave(): void {
       this.isDragOver = false;
     },
-    changeFile(event) {
-      console.log("changeFile");
-      const files = event.target.files;
-      console.dir(files);
+    changeFile(event: Event): void {
+      if (!event.target) return;
+      const files = (event.target as HTMLInputElement).files;
 
-      if (files.length <= 0) {
-        console.log("files.length === 0");
+      if (!files || files.length <= 0) {
         return;
       }
 
@@ -751,14 +790,14 @@ export default {
      *
      * @param {FileList} files
      */
-    async loadImages(files) {
+    async loadImages(files: FileList) {
       if (!files) {
         this.imageLoading = false;
         return;
       }
 
-      let promiseList = [];
-      let urlList = [];
+      let promiseList: Promise<HTMLImageElement>[] = [];
+      let urlList: string[] = [];
 
       // ファイルからURLを生成して、URLから画像を読み込むPromiseを生成してリスト化
       for (const file of files) {
@@ -788,9 +827,9 @@ export default {
 
     /**
      * ファイル名から拡張子を除いた名前を取得する
-     * @param {String} filename
+     * @param {string} filename
      */
-    getBaseName(filename) {
+    getBaseName(filename: string): string {
       const match = filename.match(/^(.*)\.[^.]+$/);
       if (match) {
         return match[1];
@@ -802,7 +841,7 @@ export default {
 
     async save() {
       this.saving = true;
-      const canvas = document.getElementById("canvas");
+      const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 
       setTimeout(async () => {
         try {
@@ -835,19 +874,19 @@ export default {
 
     /**
      * 画像をキャンバスのサイズに合わせてに描画する
-     * @param {Image} image 描画する画像
+     * @param {HTMLImageElement} image 描画する画像
      */
-    async drawImage(image) {
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
+    async drawImage(image: HTMLImageElement) {
+      const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+      const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
       ctx.drawImage(image, 0, 0, this.canvasWidth, this.canvasHeight);
     },
 
     /**
      * 画像のリサイズ後のサイズに合わせてキャンバスのサイズを変形させる。
-     * @param {Image} image リサイズ前の画像
+     * @param {HTMLImageElement} image リサイズ前の画像
      */
-    resizeCanvas(image) {
+    resizeCanvas(image: HTMLImageElement) {
       const resizeTarget = this.resizeTarget;
 
       if (resizeTarget === "size") {
@@ -869,7 +908,7 @@ export default {
       const resizeH = this.resizeHeight;
 
       // リサイズ後の倍率を求める
-      let scale = 100 / this.parcent;
+      let scale = 100 / this.percent;
       scale = resizeTarget === "width" ? imgW / resizeW : scale;
       scale = resizeTarget === "height" ? imgH / resizeH : scale;
 
@@ -878,24 +917,32 @@ export default {
     },
     /**
      * 指定時間(ミリ秒)処理を止める
-     * @param timeMs 停止させる時間(ミリ秒)
+     * @param {number} timeMs 停止させる時間(ミリ秒)
      */
-    sleep(timeMs) {
+    sleep(timeMs: number) {
       return new Promise((resolve) => setTimeout(resolve, timeMs));
     },
 
     /**
      * キャンバスのBlobを取得する
      * @param {HTMLCanvasElement} canvas Blob化する対象のキャンバス
-     * @param {String} imageType mimeType
-     * @param {Number} quality 画像の品質 (0 - 1 の値)
+     * @param {string} imageType mimeType
+     * @param {number} quality 画像の品質 (0 - 1 の値)
      *
      * @returns {Promise<Blob>}
      */
-    canvasToBlob(canvas, imageType, quality) {
+    canvasToBlob(
+      canvas: HTMLCanvasElement,
+      imageType: string,
+      quality: number
+    ): Promise<Blob> {
       return new Promise((resolve) => {
         canvas.toBlob(
           function (blob) {
+            if (!blob) {
+              Promise.reject(new Error());
+              return;
+            }
             resolve(blob);
           },
           imageType,
@@ -907,9 +954,9 @@ export default {
     /**
      * Blobをローカルに保存する
      * @param {Blob} blob
-     * @param {String} fileName
+     * @param {string} fileName
      */
-    downloadBlob(blob, fileName) {
+    downloadBlob(blob: Blob, fileName: string) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -920,5 +967,5 @@ export default {
       URL.revokeObjectURL(url); // メモリリークを防ぐためにURLを解放
     },
   },
-};
+});
 </script>

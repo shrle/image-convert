@@ -21,5 +21,4 @@ const loadImageSync = (src: string): Promise<HTMLImageElement> => {
   });
 };
 
-console.log("loadImageSync");
 export default loadImageSync;
