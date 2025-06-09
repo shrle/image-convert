@@ -656,7 +656,7 @@ canvas {
 </style>
 
 <script lang="ts">
-import loadImageSync from "@/ts/load-image-sync";
+import loadImageAsync from "@/ts/load-image-sync";
 import { defineComponent } from "vue";
 
 // @ is an alias to /src
@@ -679,13 +679,13 @@ interface ComponentData {
   resizeTarget: "width" | "height" | "percent" | "size" | "origin";
   /** 変更可能なファイル形式、ブラウザに依存する、現状chromeではこの3種類に対応する */
   fileType: "image/png" | "image/jpeg" | "image/webp";
-  /** リサイズ後の横幅 */
+  /** ユーザーが入力したリサイズ後の横幅 */
   resizeWidth: number;
-  /** リサイズ後の高さ */
+  /** ユーザーが入力したリサイズ後の高さ */
   resizeHeight: number;
-  /** オリジナルのサイズに対する割合 */
+  /** ユーザーが入力したオリジナルのサイズに対する割合 */
   percent: number;
-  /** 画質の指定 0.0 - 1.0 */
+  /** ユーザーが入力した画質の指定 0.0 - 1.0 */
   imageQuality: number;
   /** true = ドラッグオーバー中 */
   isDragOver: boolean;
@@ -723,39 +723,90 @@ export default defineComponent({
     };
   },
   computed: {
+    /**
+     * 横幅の入力欄を隠している場合
+     *
+     * @returns {boolean} true = 横幅の入力欄を隠している
+     */
     isWidthHidden() {
       const st: string = this.resizeTarget;
       return !(st === "width" || st === "size");
     },
+
+    /**
+     * 横幅の入力欄を表示している場合
+     *
+     * @returns {boolean} true = 横幅の入力欄を表示している
+     */
     isWidthShow() {
       const st: string = this.resizeTarget;
       return st === "width" || st === "size";
     },
+
+    /**
+     * 高さの入力欄を隠している
+     *
+     * @returns {boolean} true = 高さの入力欄を隠している
+     */
     isHeightHidden() {
       const st: string = this.resizeTarget;
       return !(st === "height" || st === "size");
     },
+
+    /**
+     * 高さの入力欄を表示している
+     *
+     * @returns {boolean} true = 高さの入力欄を表示している
+     */
     isHeightShow() {
       const st: string = this.resizeTarget;
       return st === "height" || st === "size";
     },
+
+    /**
+     * 割合の入力欄を隠している
+     *
+     * @returns {boolean} true = 割合の入力欄を隠している
+     */
     isParcentHidden() {
       const st: string = this.resizeTarget;
       return st !== "percent";
     },
 
+    /**
+     * 割合の入力欄を表示している
+     *
+     * @returns {boolean} true = 割合の入力欄を表示している
+     */
     isParcentShow() {
       const st: string = this.resizeTarget;
       return st === "percent";
     },
   },
   watch: {
+    /**
+     * 横幅の入力値が0より下げない
+     * 備考: HTMLのmin属性で制御しているから必要ないかもしれない
+     * @param value
+     */
     resizeWidth(value) {
       this.resizeWidth = value < 0 ? 0 : value;
     },
+
+    /**
+     * 高さの入力値が0より下げない
+     * 備考: HTMLのmin属性で制御しているから必要ないかもしれない
+     * @param value
+     */
     resizeHeight(value) {
       this.resizeHeight = value < 0 ? 0 : value;
     },
+
+    /**
+     * 割合の入力値が0 - 100の範囲に留める
+     * 備考: HTMLで制御しているから必要ないかもしれない
+     * @param value
+     */
     parent(value) {
       this.percent = value < 0.1 ? 0.1 : value;
       this.percent = value > 100 ? 100 : value;
@@ -763,50 +814,82 @@ export default defineComponent({
   },
   mounted() {},
   methods: {
+    /**
+     * ドラッグオーバーのフラグを立てる
+     */
     dragover(): void {
       this.isDragOver = true;
     },
+
+    /**
+     * ドラッグオーバーのフラグを解除する
+     */
     dragleave(): void {
-      this.isDragOver = false;
-    },
-    changeFile(event: Event): void {
-      if (!event.target) return;
-      const files = (event.target as HTMLInputElement).files;
-
-      if (!files || files.length <= 0) {
-        return;
-      }
-
-      this.imageLoading = true;
-
-      setTimeout(async () => {
-        await this.loadImages(files);
-      }, 0);
-
       this.isDragOver = false;
     },
 
     /**
+     * input[type=file]が変更された時(ファイルをD&Dかファイル指定されたとき)呼び出される関数
+     * 指定された画像を読み込む
      *
-     * @param {FileList} files
+     * @param event {Event}
+     */
+    changeFile(event: Event): void {
+      // 何らかの理由でファイルの指定がなかった
+      if (!event.target) return;
+
+      // 指定されたファイルのリスト
+      const files = (event.target as HTMLInputElement).files;
+
+      if (!files || files.length <= 0) {
+        // 何らかの理由でファイル指定が見つからなかった
+        return;
+      }
+
+      // 画像を読込中のフラグを立てる
+      this.imageLoading = true;
+
+      // 非同期的に画像読み込みを行わせる
+      setTimeout(async () => {
+        // 画像を読み込む
+        await this.loadImages(files);
+      }, 0);
+
+      // ドラッグオーバーのフラグを解除する
+      this.isDragOver = false;
+    },
+
+    /**
+     * 同期的にファイルリストから画像の読み込みを行う
+     * @param files input[type=file]から指定された(event.target as HTMLInputElement).filesのファイルリスト
      */
     async loadImages(files: FileList) {
-      if (!files) {
+      if (!files || files.length === 0) {
+        // ファイル指定が見つからなかった
         this.imageLoading = false;
         return;
       }
 
+      /** 同期的に画像を読み込むための関数のリスト */
       let promiseList: Promise<HTMLImageElement>[] = [];
+      /**
+       * URL.createObjectURL(file)で生成したURLのリスト
+       * 破棄するときに必要となる
+       */
       let urlList: string[] = [];
 
       // ファイルからURLを生成して、URLから画像を読み込むPromiseを生成してリスト化
       for (const file of files) {
+        // 画像ファイルを読み込むためのURLを生成する
         const url = URL.createObjectURL(file);
-        promiseList.push(loadImageSync(url));
+        // 画像ファイルを読み込むPromiseをリストに追加
+        promiseList.push(loadImageAsync(url));
 
         // 生成したURLはのちに破棄するので記録しておく
         urlList.push(url);
+        // 拡張子を除いたファイル名を取得 / file.name = パスを除いたファイル名
         const basename = this.getBaseName(file.name);
+        // ファイル名をリストに追加
         this.basenameList.push(basename);
       }
 
@@ -814,20 +897,27 @@ export default defineComponent({
       const result = await Promise.allSettled(promiseList);
 
       if (!Array.isArray(this.images)) {
+        // 画像のリストがない場合に初期化する
         this.images = [];
       }
 
+      // 読み込んだ画像の状態を調べる
       for (const r of result) {
+        // 読み込みに失敗している場合
         if (r.status === "rejected") continue;
+        // 読み込みに成功したらリストに追加
         this.images.push(r.value);
       }
 
+      // 画像の読込中のフラグを解除する
       this.imageLoading = false;
     },
 
     /**
      * ファイル名から拡張子を除いた名前を取得する
      * @param {string} filename
+     *
+     * @returns 拡張子を除いたファイル名
      */
     getBaseName(filename: string): string {
       const match = filename.match(/^(.*)\.[^.]+$/);
@@ -839,27 +929,37 @@ export default defineComponent({
 
     /* @@@@@ 画像処理 @@@@@ */
 
+    /**
+     * 同期的に画像ファイルをクライアントに保存する
+     */
     async save() {
+      // 保存中のフラグを立てる
       this.saving = true;
+      // キャンバス要素を取得
       const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 
+      // 非同期的に処理を行う
       setTimeout(async () => {
         try {
           for (let i = 0; i < this.images.length; i++) {
             const img = this.images[i];
 
-            this.resizeCanvas(img);
+            // キャンバスをリサイズ後のサイズに変形させる
+            this.resizeCanvas(img, this.resizeTarget);
 
             // キャンバスのサイズの変形にわずかに時間がかかるため、処理を停止させなければならない
             await this.sleep(100);
+            // キャンバスに画像を描画する
             await this.drawImage(img);
+            // キャンバスからblobを取得する
             const blob = await this.canvasToBlob(
               canvas,
               this.fileType,
               this.imageQuality
             );
 
-            this.downloadBlob(blob, this.basenameList[i]); // 画像の保存
+            // blobを画像ファイルとしてクライアントに保存する
+            this.downloadBlob(blob, this.basenameList[i]);
           }
         } catch (error) {
           console.dir(error);
@@ -867,7 +967,6 @@ export default defineComponent({
           return;
         }
 
-        console.log("complete!");
         this.saving = false;
       }, 0);
     },
@@ -877,24 +976,36 @@ export default defineComponent({
      * @param {HTMLImageElement} image 描画する画像
      */
     async drawImage(image: HTMLImageElement) {
+      // キャンバス要素を取得する
       const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+      // 描画に必要なコンテキストを取得
       const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+      // 画像を描画する
       ctx.drawImage(image, 0, 0, this.canvasWidth, this.canvasHeight);
     },
 
     /**
-     * 画像のリサイズ後のサイズに合わせてキャンバスのサイズを変形させる。
-     * @param {HTMLImageElement} image リサイズ前の画像
+     * 指定のリサイズの方法を元に指定画像のリサイズ後のサイズを計算し、キャンバスをそのサイズに変形させる
+     * @param image リサイズ前の画像
+     * @param resizeTarget 指定された値によってリサイズ後のサイズを決める
+     * "width": 横幅を指定し縦横比は維持
+     * "height": 高さを指定し縦横比は維持
+     * "percent": サイズの割合を指定
+     * "size": 横幅と高さを指定する
+     * "origin": サイズを変更しない
      */
-    resizeCanvas(image: HTMLImageElement) {
-      const resizeTarget = this.resizeTarget;
-
+    resizeCanvas(
+      image: HTMLImageElement,
+      resizeTarget: "width" | "height" | "percent" | "size" | "origin"
+    ) {
+      // 横幅と高さを指定する場合
       if (resizeTarget === "size") {
         this.canvasWidth = this.resizeWidth;
         this.canvasHeight = this.resizeHeight;
         return;
       }
 
+      // サイズを変更しない場合
       if (resizeTarget === "origin") {
         this.canvasWidth = image.width;
         this.canvasHeight = image.height;
@@ -908,10 +1019,14 @@ export default defineComponent({
       const resizeH = this.resizeHeight;
 
       // リサイズ後の倍率を求める
+      // "percent"の場合は入力された割合から求める
       let scale = 100 / this.percent;
+      // 元の横幅 / リサイズ後の横幅 = リサイズ後の倍率
       scale = resizeTarget === "width" ? imgW / resizeW : scale;
+      // 元の高さ / リサイズ後の高さ = リサイズ後の倍率
       scale = resizeTarget === "height" ? imgH / resizeH : scale;
 
+      // リサイズ後のサイズをキャンバスに適用する
       this.canvasWidth = Math.floor(image.width / scale);
       this.canvasHeight = Math.floor(image.height / scale);
     },
@@ -924,10 +1039,10 @@ export default defineComponent({
     },
 
     /**
-     * キャンバスのBlobを取得する
+     * 同期的にキャンバスのBlobを取得する
      * @param {HTMLCanvasElement} canvas Blob化する対象のキャンバス
      * @param {string} imageType mimeType
-     * @param {number} quality 画像の品質 (0 - 1 の値)
+     * @param {number} quality 画像の品質 (0.0 - 1.0 の値)
      *
      * @returns {Promise<Blob>}
      */
@@ -957,14 +1072,22 @@ export default defineComponent({
      * @param {string} fileName
      */
     downloadBlob(blob: Blob, fileName: string) {
+      // blobからURLを取得
       const url = URL.createObjectURL(blob);
+      // a要素(リンク)を生成
       const a = document.createElement("a");
+      // リンクにURLを設定
       a.href = url;
-      a.download = fileName; // ダウンロード時のファイル名
+      // ダウンロード時のファイル名を設定
+      a.download = fileName;
+      // a要素をDOMに追加
       document.body.appendChild(a);
+      // リンクをクリックさせることでダウンロードが行われる
       a.click();
+      // a要素はもう不要なので消去
       document.body.removeChild(a);
-      URL.revokeObjectURL(url); // メモリリークを防ぐためにURLを解放
+      // メモリリークを防ぐためにURLを解放
+      URL.revokeObjectURL(url);
     },
   },
 });
