@@ -985,7 +985,7 @@ export default defineComponent({
     },
 
     /**
-     * 指定のリサイズの方法を元に指定画像のリサイズ後のサイズを計算し、キャンバスをそのサイズに変形させる
+     * 指定画像のリサイズ後のサイズを求め、キャンバスをそのサイズに変形させる
      * @param image リサイズ前の画像
      * @param resizeTarget 指定された値によってリサイズ後のサイズを決める
      * "width": 横幅を指定し縦横比は維持
@@ -1005,31 +1005,43 @@ export default defineComponent({
         return;
       }
 
-      // サイズを変更しない場合
-      if (resizeTarget === "origin") {
-        this.canvasWidth = image.width;
-        this.canvasHeight = image.height;
-        return;
-      }
-
-      // 一時的に変数名を短縮
-      const imgW = image.width;
-      const imgH = image.height;
-      const resizeW = this.resizeWidth;
-      const resizeH = this.resizeHeight;
-
-      // リサイズ後の倍率を求める
-      // "percent"の場合は入力された割合から求める
-      let scale = 100 / this.percent;
-      // 元の横幅 / リサイズ後の横幅 = リサイズ後の倍率
-      scale = resizeTarget === "width" ? imgW / resizeW : scale;
-      // 元の高さ / リサイズ後の高さ = リサイズ後の倍率
-      scale = resizeTarget === "height" ? imgH / resizeH : scale;
+      // リサイズの倍率を求める
+      let scale = this.calcResizeScale(image);
 
       // リサイズ後のサイズをキャンバスに適用する
-      this.canvasWidth = Math.floor(image.width / scale);
-      this.canvasHeight = Math.floor(image.height / scale);
+      this.canvasWidth = Math.round(image.width * scale);
+      this.canvasHeight = Math.round(image.height * scale);
     },
+
+    /**
+     * 指定のリサイズの方法を元に指定画像のリサイズ後のサイズを計算する
+     *
+     * @param image リサイズ前の画像
+     *
+     * @returns リサイズの倍率
+     */
+    calcResizeScale(image: HTMLImageElement): number {
+      switch (this.resizeTarget) {
+        case "origin":
+          // 元画像からサイズを変更しない
+          return 1;
+
+        case "percent":
+          // "percent"の場合は入力された割合から求める
+          return this.percent / 100;
+
+        case "width":
+          // リサイズ後の横幅 / 元の横幅 = リサイズの倍率
+          return this.resizeWidth / image.width;
+
+        case "height":
+          // リサイズ後の高さ / 元の高さ = リサイズ後の倍率
+          return this.resizeHeight / image.height;
+      }
+
+      return 1;
+    },
+
     /**
      * 指定時間(ミリ秒)処理を止める
      * @param {number} timeMs 停止させる時間(ミリ秒)
